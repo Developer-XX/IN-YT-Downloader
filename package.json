@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": "22.13.1"
+  },
   "name": "in-yt-downloader",
   "version": "1.0.0",
   "description": "",
