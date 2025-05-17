@@ -130,7 +130,7 @@
                 // Create hidden iframe for download
                 const iframe = document.createElement('iframe');
                 iframe.style.display = 'none';
-                iframe.src = `http://localhost:3001/download/${currentTab}?url=${encodeURIComponent(url)}`;
+                iframe.src = `https://in-yt-downloader.onrender.com/download/${currentTab}?url=${encodeURIComponent(url)}`;
                 document.body.appendChild(iframe);
                 
                 // Hide loading after some time (in case download doesn't start)
