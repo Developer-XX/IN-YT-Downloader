@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const ytdl = require('yt-dlp-exec');
+const fs = require('fs');
 const app = express();
 const path = require('path');
 const port = 10000;
@@ -13,7 +14,7 @@ function sanitizeFilename(name) {
     return name.replace(/[<>:"\/\\|?*\x00-\x1F]/g, '').trim();
 }
 
-// Instagram download endpoint
+// Full HD Instagram Reel download route
 app.get('/download/instagram', async (req, res) => {
     try {
         const url = req.query.url;
@@ -21,31 +22,45 @@ app.get('/download/instagram', async (req, res) => {
             return res.status(400).json({ error: 'Invalid Instagram URL' });
         }
 
+        const cookiesPath = path.join(__dirname, 'cookies.txt');
+        if (!fs.existsSync(cookiesPath)) {
+            return res.status(500).json({ error: 'cookies.txt not found. Please export your Instagram login cookies.' });
+        }
+
+        // Get video info first
         const info = await ytdl(url, {
-            dumpSingleJson: true,
+            dumpJson: true,
             noCheckCertificates: true,
-            preferFreeFormats: true,
-            extractorArgs: ['instagram:username=your_username', 'instagram:password=your_password']
+            cookies: cookiesPath
         });
 
-        const title = sanitizeFilename(info.title || 'instagram_video');
-        res.setHeader('Content-Disposition', `attachment; filename="${title}.mp4"`);
+        if (!info || !info.title) {
+            return res.status(404).json({ error: 'Video information could not be retrieved' });
+        }
 
-        // Stream the video
-        ytdl.exec(url, {
-            format: 'best[ext=mp4]',
+        const title = info.title || 'instagram_reel';
+        const cleanTitle = title.replace(/[^\w\s]/gi, '');
+        res.setHeader('Content-Disposition', `attachment; filename="${cleanTitle}.mp4"`);
+        res.setHeader('Content-Type', 'video/mp4');
+
+        // Pipe full HD video
+        ytdl(url, {
+            format: 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]',
+            mergeOutputFormat: 'mp4',
             noCheckCertificates: true,
-            output: '-', // stream to stdout
-        }, { stdio: ['ignore', 'pipe', 'ignore'] }).stdout.pipe(res);
+            cookies: cookiesPath,
+            stdout: true
+        }).pipe(res);
 
     } catch (error) {
-        console.error('Instagram download error:', error);
-        res.status(500).json({
-            error: 'Failed to download Instagram video',
+        console.error('Instagram Full HD download error:', error);
+        res.status(500).json({ 
+            error: 'Failed to download video in Full HD',
             details: error.message
         });
     }
 });
+
 
 // YouTube download endpoint
 app.get('/download/youtube', async (req, res) => {
