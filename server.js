@@ -3,7 +3,7 @@ const cors = require('cors');
 const ytdl = require('yt-dlp-exec');
 const app = express();
 const path = require('path');
-const port = 3001;
+const port = 10000;
 
 app.use(cors());
 app.use(express.json());
